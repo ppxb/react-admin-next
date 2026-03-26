@@ -16,8 +16,5 @@ export default defineConfig(({ mode }) => {
       port: +VITE_APP_PORT,
       host: true,
     },
-    build: {
-      minify: true,
-    },
   }
 })
