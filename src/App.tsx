@@ -1,10 +1,13 @@
-import { Button } from 'antd'
+import { RouterProvider } from '@tanstack/react-router'
+import { ConfigProvider } from 'antd'
+
+import { router } from '@/router'
 
 function App() {
   return (
-    <div>
-      <Button type="primary">你好</Button>
-    </div>
+    <ConfigProvider>
+      <RouterProvider router={router} />
+    </ConfigProvider>
   )
 }
 
