@@ -1,7 +1,7 @@
 const metrics = [
   { key: 'active-users', title: 'Active Users', value: 1280, suffix: 'users' },
   { key: 'orders', title: 'Daily Orders', value: 246, suffix: 'orders' },
-  { key: 'conversion', title: 'Conversion Rate', value: 4.8, suffix: '%' },
+  { key: 'conversion', title: 'Conversion Rate', value: 4.8, suffix: '%' }
 ]
 
 export function DashboardPage() {
@@ -14,7 +14,10 @@ export function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {metrics.map(metric => (
-          <section key={metric.key} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section
+            key={metric.key}
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+          >
             <p className="text-sm text-slate-500">{metric.title}</p>
             <p className="mt-3 text-3xl font-semibold text-slate-900">
               {metric.value}

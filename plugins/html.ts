@@ -4,8 +4,8 @@ export default function createHtmlPlugin(title: string) {
   return vitePluginHtml({
     inject: {
       data: {
-        VITE_APP_TITLE: title,
-      },
-    },
+        VITE_APP_TITLE: title
+      }
+    }
   })
 }

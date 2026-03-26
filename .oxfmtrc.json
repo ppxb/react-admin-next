@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "arrowParens": "avoid",
+  "semi": false,
+  "trailingComma": "none",
+  "singleQuote": true,
+  "sortTailwindcss": {
+    "stylesheet": "./src/styles/globals.css",
+    "functions": ["clsx", "cn"],
+    "preserveWhitespace": true,
+    "preserveDuplicates": true
+  },
+  "ignorePatterns": ["node_modules"]
+}

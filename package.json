@@ -1,13 +1,15 @@
 {
   "name": "react-admin-next",
-  "type": "module",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint",
-    "lint:fix": "eslint --fix",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -24,18 +26,14 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^7.7.3",
-    "@eslint-react/eslint-plugin": "~2.11.0",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/devtools": "^0.1.11",
     "@vitejs/plugin-react": "^6.0.1",
-    "eslint": "~9.39.4",
-    "eslint-plugin-format": "^2.0.1",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
+    "oxfmt": "^0.42.0",
+    "oxlint": "^1.57.0",
     "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "vite": "^8.0.3",

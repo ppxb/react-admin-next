@@ -9,15 +9,15 @@ export default defineConfig(({ mode }) => {
 
   return {
     resolve: {
-      tsconfigPaths: true,
+      tsconfigPaths: true
     },
     plugins: createVitePlugins(env),
     server: {
       port: +VITE_APP_PORT,
-      host: true,
+      host: true
     },
     build: {
-      minify: true,
-    },
+      minify: true
+    }
   }
 })

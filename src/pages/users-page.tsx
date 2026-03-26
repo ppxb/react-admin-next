@@ -9,7 +9,7 @@ interface UserRecord {
 const users: UserRecord[] = [
   { key: '1', name: 'Olivia Carter', department: 'Product', role: 'admin', status: 'active' },
   { key: '2', name: 'Liam Brooks', department: 'Engineering', role: 'editor', status: 'active' },
-  { key: '3', name: 'Ava Thompson', department: 'Operations', role: 'viewer', status: 'inactive' },
+  { key: '3', name: 'Ava Thompson', department: 'Operations', role: 'viewer', status: 'inactive' }
 ]
 
 function getStatusClasses(status: UserRecord['status']) {
@@ -23,7 +23,9 @@ export function UsersPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
-        <p className="mt-1 text-sm text-slate-500">Example user management table built with semantic HTML + Tailwind.</p>
+        <p className="mt-1 text-sm text-slate-500">
+          Example user management table built with semantic HTML + Tailwind.
+        </p>
       </div>
 
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -48,7 +50,9 @@ export function UsersPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-md px-2 py-1 text-xs font-medium ${getStatusClasses(user.status)}`}>
+                    <span
+                      className={`rounded-md px-2 py-1 text-xs font-medium ${getStatusClasses(user.status)}`}
+                    >
                       {user.status}
                     </span>
                   </td>

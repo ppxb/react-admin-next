@@ -4,6 +4,6 @@ export default function createCompressionPlugin() {
   return compression({
     algorithms: ['gzip'],
     threshold: 10240,
-    deleteOriginalAssets: false,
+    deleteOriginalAssets: false
   })
 }

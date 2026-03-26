@@ -4,7 +4,7 @@ import {
   createRouter,
   lazyRouteComponent,
   Outlet,
-  redirect,
+  redirect
 } from '@tanstack/react-router'
 
 import { useAuthStore } from '@/stores/auth'
@@ -30,50 +30,50 @@ function redirectWhenAuthenticated() {
 
 const rootRoute = createRootRoute({
   component: Outlet,
-  notFoundComponent: NotFoundPage,
+  notFoundComponent: NotFoundPage
 })
 
 const protectedRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'protected',
   beforeLoad: requireAuth,
-  component: AdminLayout,
+  component: AdminLayout
 })
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   beforeLoad: redirectWhenAuthenticated,
-  component: LoginPage,
+  component: LoginPage
 })
 
 const dashboardRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/',
-  component: DashboardPage,
+  component: DashboardPage
 })
 
 const usersRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/users',
-  component: UsersPage,
+  component: UsersPage
 })
 
 const settingsRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/settings',
-  component: SettingsPage,
+  component: SettingsPage
 })
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
-  protectedRoute.addChildren([dashboardRoute, usersRoute, settingsRoute]),
+  protectedRoute.addChildren([dashboardRoute, usersRoute, settingsRoute])
 ])
 
 export const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
-  scrollRestoration: true,
+  scrollRestoration: true
 })
 
 declare module '@tanstack/react-router' {

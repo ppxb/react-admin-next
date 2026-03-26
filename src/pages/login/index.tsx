@@ -44,7 +44,7 @@ export function LoginPage() {
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-slate-700">Username</span>
             <input
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm transition outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               onChange={event => setUsername(event.target.value)}
               placeholder="admin"
               type="text"
@@ -55,7 +55,7 @@ export function LoginPage() {
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-slate-700">Password</span>
             <input
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm transition outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               onChange={event => setPassword(event.target.value)}
               placeholder="******"
               type="password"

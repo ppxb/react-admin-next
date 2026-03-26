@@ -7,17 +7,15 @@ import { useAuthStore, useCurrentUser } from '@/stores/auth'
 const navItems = [
   { path: '/' as const, label: 'Dashboard' },
   { path: '/users' as const, label: 'Users' },
-  { path: '/settings' as const, label: 'Settings' },
+  { path: '/settings' as const, label: 'Settings' }
 ]
 
 type MenuPath = (typeof navItems)[number]['path']
 
 function resolveSelectedKey(pathname: string): MenuPath {
-  if (pathname.startsWith('/users'))
-    return '/users'
+  if (pathname.startsWith('/users')) return '/users'
 
-  if (pathname.startsWith('/settings'))
-    return '/settings'
+  if (pathname.startsWith('/settings')) return '/settings'
 
   return '/'
 }
@@ -48,15 +46,17 @@ export function AdminLayout() {
           </div>
 
           <nav className="space-y-1 p-3">
-            {navItems.map((item) => {
+            {navItems.map(item => {
               const isActive = selectedKey === item.path
 
               return (
                 <button
                   key={item.path}
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${isActive
-                    ? 'bg-slate-900 text-white'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
+                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-slate-900 text-white'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
                   onClick={() => handleNavigate(item.path)}
                   type="button"
                 >
@@ -88,15 +88,17 @@ export function AdminLayout() {
             </div>
 
             <div className="mt-3 flex gap-2 overflow-x-auto lg:hidden">
-              {navItems.map((item) => {
+              {navItems.map(item => {
                 const isActive = selectedKey === item.path
 
                 return (
                   <button
                     key={item.path}
-                    className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${isActive
-                      ? 'bg-slate-900 text-white'
-                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
+                    className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-slate-900 text-white'
+                        : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
                     onClick={() => handleNavigate(item.path)}
                     type="button"
                   >

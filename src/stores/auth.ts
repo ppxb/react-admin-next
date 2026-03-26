@@ -31,26 +31,26 @@ export const useAuthStore = create<AuthState>()(
           user: {
             id: 'u_admin',
             name: username,
-            role: 'admin',
-          },
+            role: 'admin'
+          }
         })
       },
       logout: () => {
         set({
           isAuthenticated: false,
-          user: null,
+          user: null
         })
-      },
+      }
     }),
     {
       name: 'react-admin-auth',
       storage: createJSONStorage(() => localStorage),
       partialize: state => ({
         isAuthenticated: state.isAuthenticated,
-        user: state.user,
-      }),
-    },
-  ),
+        user: state.user
+      })
+    }
+  )
 )
 
 export const useIsAuthenticated = () => useAuthStore(state => state.isAuthenticated)

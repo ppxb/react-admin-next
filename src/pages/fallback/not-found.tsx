@@ -9,18 +9,14 @@ export function NotFoundPage() {
   const navigate = useNavigate()
 
   return (
-    <div
-      className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10"
-    >
+    <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10">
       <div className="w-full max-w-md">
         <Card>
           <CardContent className="grid gap-6 p-6 md:p-8">
             <div className="flex flex-col items-center gap-2 text-center">
-              <div className="text-primary font-mono text-8xl font-bold">404</div>
-              <h1 className="text-2xl font-bold">
-                Page Not Found
-              </h1>
-              <p className="text-muted-foreground text-sm">
+              <div className="font-mono text-8xl font-bold text-primary">404</div>
+              <h1 className="text-2xl font-bold">Page Not Found</h1>
+              <p className="text-sm text-muted-foreground">
                 Sorry, the page you're looking for doesn't exist or has been removed
               </p>
             </div>
