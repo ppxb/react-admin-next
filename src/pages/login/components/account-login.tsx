@@ -298,10 +298,7 @@ export function AccountLogin() {
                       value={field.state.value}
                     />
                     <button
-                      aria-label={
-                        isCaptchaExpired ? 'Reload captcha' : 'Captcha image, click to reload'
-                      }
-                      className="relative h-9 w-24 shrink-0 overflow-hidden rounded-lg border hover:cursor-pointer md:w-28"
+                      className="relative h-9 overflow-hidden rounded-lg border hover:cursor-pointer"
                       onClick={loadCaptcha}
                       type="button"
                     >
@@ -313,7 +310,7 @@ export function AccountLogin() {
                         />
                       )}
                       {isCaptchaExpired && (
-                        <span className="absolute inset-0 flex items-center justify-center bg-black/60 font-bold text-white backdrop-blur-sm">
+                        <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/60 font-bold text-white backdrop-blur-sm">
                           Expired
                         </span>
                       )}
