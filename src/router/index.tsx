@@ -17,13 +17,13 @@ const SettingsPage = lazyRouteComponent(() => import('@/pages/settings-page'), '
 const UsersPage = lazyRouteComponent(() => import('@/pages/users-page'), 'UsersPage')
 
 function requireAuth() {
-  if (!useAuthStore.getState().isAuthenticated) {
+  if (!useAuthStore.getState().token) {
     throw redirect({ to: '/login' })
   }
 }
 
 function redirectWhenAuthenticated() {
-  if (useAuthStore.getState().isAuthenticated) {
+  if (useAuthStore.getState().token) {
     throw redirect({ to: '/' })
   }
 }
@@ -81,3 +81,4 @@ declare module '@tanstack/react-router' {
     router: typeof router
   }
 }
+

@@ -14,7 +14,15 @@ export default defineConfig(({ mode }) => {
     plugins: createVitePlugins(env),
     server: {
       port: +VITE_APP_PORT,
-      host: true
+      host: true,
+      proxy: {
+        '/api': {
+          changeOrigin: true,
+          target: 'http://localhost:8080',
+          rewrite: path => path.replace(/^\/api/, ''),
+          ws: true
+        }
+      }
     },
     build: {
       minify: true

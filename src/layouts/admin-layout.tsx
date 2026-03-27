@@ -32,9 +32,9 @@ export function AdminLayout() {
     void navigate({ to: path })
   }
 
-  const handleLogout = () => {
-    logout()
-    void navigate({ to: '/login' })
+  const handleLogout = async () => {
+    await logout()
+    await navigate({ to: '/login' })
   }
 
   return (
@@ -78,7 +78,9 @@ export function AdminLayout() {
                 </span>
                 <button
                   className="inline-flex items-center gap-2 rounded-lg border border-rose-200 px-3 py-1.5 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50"
-                  onClick={handleLogout}
+                  onClick={() => {
+                    void handleLogout()
+                  }}
                   type="button"
                 >
                   <LogOut className="size-4" />

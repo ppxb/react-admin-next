@@ -1,82 +1,57 @@
-import type { FormEvent } from 'react'
-import { useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
-
-import { useAuthStore } from '@/stores/auth'
+import { Card, CardContent } from '@/components/ui/card'
+import { FieldDescription } from '@/components/ui/field'
+import { Ripple } from '@/components/ui/ripple'
+import { AccountLogin } from './components/account-login'
 
 export function LoginPage() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-
-  const navigate = useNavigate()
-  const login = useAuthStore(state => state.login)
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
-    const nextUsername = username.trim()
-
-    if (!nextUsername || !password.trim()) {
-      setError('Username and password are required')
-      return
-    }
-
-    setSubmitting(true)
-    setError(null)
-
-    login({ username: nextUsername })
-    await navigate({ to: '/' })
-
-    setSubmitting(false)
-  }
+  const appTitle = import.meta.env.VITE_APP_TITLE
 
   return (
-    <div className="grid min-h-screen place-items-center bg-slate-100 px-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-md">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Login</h1>
-          <p className="mt-1 text-sm text-slate-500">Admin entry for React + Tailwind stack.</p>
+    <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10">
+      <div className="w-full max-w-sm md:max-w-4xl">
+        <div className="mb-8 flex items-center justify-between md:justify-end">
+          <div className="flex items-center gap-2 md:hidden">
+            <svg
+              aria-label="logomark"
+              height="22"
+              role="img"
+              className="w-auto overflow-visible"
+              viewBox="0 0 74 64"
+            >
+              <path
+                d="M37.5896 0.25L74.5396 64.25H0.639648L37.5896 0.25Z"
+                fill="var(--geist-foreground)"
+              ></path>
+            </svg>
+            <div className="font-bold md:text-lg">{appTitle}</div>
+          </div>
         </div>
 
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Username</span>
-            <input
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm transition outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-              onChange={event => setUsername(event.target.value)}
-              placeholder="admin"
-              type="text"
-              value={username}
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Password</span>
-            <input
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm transition outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-              onChange={event => setPassword(event.target.value)}
-              placeholder="******"
-              type="password"
-              value={password}
-            />
-          </label>
-
-          {error && (
-            <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
-              {error}
-            </p>
-          )}
-
-          <button
-            className="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-            disabled={submitting}
-            type="submit"
-          >
-            {submitting ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
+        <div className="flex flex-col gap-6">
+          <Card className="overflow-hidden p-0">
+            <CardContent className="grid p-0 md:grid-cols-2">
+              <AccountLogin />
+              <div className="relative hidden justify-end bg-background md:flex">
+                <div className="flex h-fit items-center gap-2 p-8">
+                  <svg
+                    aria-label="logomark"
+                    height="22"
+                    role="img"
+                    className="w-auto overflow-visible"
+                    viewBox="0 0 74 64"
+                  >
+                    <path d="M37.5896 0.25L74.5396 64.25H0.639648L37.5896 0.25Z"></path>
+                  </svg>
+                  <div className="font-bold md:text-lg">{appTitle}</div>
+                </div>
+                <Ripple />
+              </div>
+            </CardContent>
+          </Card>
+          <FieldDescription className="px-6 text-center">
+            © 2026 ppxb. All rights reserved.
+          </FieldDescription>
+        </div>
       </div>
     </div>
   )
