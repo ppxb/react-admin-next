@@ -1,7 +1,4 @@
-import {
-  encryptRequestPayload,
-  type RequestEncryptionOptions
-} from '@/lib/request-crypto'
+import { encryptRequestPayload, type RequestEncryptionOptions } from '@/lib/request-crypto'
 
 type Primitive = boolean | number | string
 
@@ -446,10 +443,7 @@ export interface UnwrapApiResponseOptions {
   skipErrorHandler?: boolean
 }
 
-export function unwrapApiResponse<T>(
-  payload: Api.R<T>,
-  options: UnwrapApiResponseOptions = {}
-): T {
+export function unwrapApiResponse<T>(payload: Api.R<T>, options: UnwrapApiResponseOptions = {}): T {
   if (payload.code !== 200) {
     const error = new HttpError({
       code: payload.code,
@@ -468,6 +462,13 @@ export function unwrapApiResponse<T>(
     throw error
   }
   return payload.data
+}
+
+export function getErrorMessage(error: unknown) {
+  if (error instanceof HttpError || error instanceof Error) {
+    return error.message
+  }
+  return '服务端错误，请稍候再试'
 }
 
 export const http = new HttpClient()

@@ -1,5 +1,5 @@
 declare namespace Api {
-  type GrantType = 'password' | 'sms' | 'email' | 'social' | 'xcx' | (string & {})
+  type GrantType = 'password' | 'sms' | 'email' | 'social' | 'xcx'
 
   interface R<T = unknown> {
     code: number
@@ -30,10 +30,20 @@ declare namespace Api {
     openid?: string
   }
 
+  // 验证码
   interface CaptchaVo {
     captchaEnabled: boolean
-    uuid?: string
-    img?: string
+    uuid: string
+    img: string
+    expiresAt: number
+  }
+
+  type CaptchaResp = R<CaptchaVo>
+
+  // 租户
+  interface TenantVo {
+    tenantEnabled: boolean
+    voList: TenantListVo[]
   }
 
   interface TenantListVo {
@@ -42,10 +52,7 @@ declare namespace Api {
     domain?: string
   }
 
-  interface LoginTenantVo {
-    tenantEnabled: boolean
-    voList: TenantListVo[]
-  }
+  type TenantResp = R<TenantVo>
 
   interface SysUserLite {
     userId: number
@@ -65,8 +72,6 @@ declare namespace Api {
   }
 
   type AuthLoginResponse = R<LoginVo>
-  type CaptchaResponse = R<CaptchaVo>
-  type TenantListResponse = R<LoginTenantVo>
   type UserInfoResponse = R<UserInfoVo>
   type VoidResponse = R<void>
 }

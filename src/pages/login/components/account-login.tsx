@@ -1,8 +1,7 @@
-import type { FormEvent } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { EyeIcon, EyeOffIcon } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
@@ -18,55 +17,45 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { HttpError } from '@/lib/http'
+import { getErrorMessage } from '@/lib/http'
 import { useAuthStore } from '@/stores/auth'
 
 const loginSchema = z.object({
-  username: z.string().trim().min(1, 'Username is required.'),
-  password: z.string().trim().min(1, 'Password is required.'),
-  tenantId: z.string().trim().min(1, 'Please select a tenant.'),
-  captchaCode: z.string().trim().min(1, 'Captcha is required.')
+  username: z.string().trim().min(1, 'Username is required'),
+  password: z.string().trim().min(1, 'Password is required'),
+  tenantId: z.string().trim().min(1, 'Please select a tenant'),
+  captchaCode: z.string().trim().min(1, 'Captcha is required')
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
-function asCaptchaImage(base64Img?: string) {
-  return base64Img ? `data:image/png;base64,${base64Img}` : ''
-}
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof HttpError) {
-    return error.message
+function getFieldError(errors: unknown[]): string | undefined {
+  for (const error of errors) {
+    if (typeof error === 'string') {
+      return error
+    }
+    if (Array.isArray(error)) {
+      const nested = getFieldError(error)
+      if (nested) {
+        return nested
+      }
+    }
+    if (
+      error &&
+      typeof error === 'object' &&
+      'message' in error &&
+      typeof error.message === 'string'
+    ) {
+      return error.message
+    }
   }
-
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  return 'Login failed, please retry.'
-}
-
-function getFieldError(errors: unknown[]) {
-  const message = errors[0]
-  return typeof message === 'string' ? message : undefined
 }
 
 export function AccountLogin() {
   const navigate = useNavigate()
   const login = useAuthStore(state => state.login)
-  const isLoggingIn = useAuthStore(state => state.isLoggingIn)
 
-  const [isLoading, setIsLoading] = useState(false)
-
-  const [tenants, setTenants] = useState<Api.TenantListVo[]>([])
-  const [tenantEnabled, setTenantEnabled] = useState(false)
-  const [captchaEnabled, setCaptchaEnabled] = useState(false)
-  const [captchaUuid, setCaptchaUuid] = useState<string>()
-  const [captchaImage, setCaptchaImage] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-
-  const [initializing, setInitializing] = useState(true)
-  const [captchaLoading, setCaptchaLoading] = useState(false)
 
   const form = useForm({
     defaultValues: {
@@ -76,126 +65,91 @@ export function AccountLogin() {
       captchaCode: ''
     } satisfies LoginFormValues,
     onSubmit: async ({ value }) => {
-      setIsLoading(true)
       const payload = {
         username: value.username,
         password: value.password,
-        tenantId: tenantEnabled ? value.tenantId : undefined,
-        code: captchaEnabled ? value.captchaCode : undefined,
-        uuid: captchaEnabled ? captchaUuid : undefined
+        tenantId: value.tenantId,
+        code: value.captchaCode,
+        uuid: captchaInfo.uuid
       }
 
       try {
         await login(payload)
-        toast.success('Login successful.')
+        toast.success('Login successful')
         await navigate({ to: '/' })
       } catch (submitError) {
         toast.error(getErrorMessage(submitError))
-
-        if (captchaEnabled) {
-          form.setFieldValue('captchaCode', '')
-          try {
-            await refreshCaptcha()
-          } catch {
-            // Keep login error as the primary feedback.
-          }
-        }
-      } finally {
-        setIsLoading(false)
       }
     }
   })
 
-  const tenantOptions = useMemo(
-    () => tenants.map(item => ({ label: item.companyName, value: item.tenantId })),
-    [tenants]
-  )
+  const [captchaInfo, setCaptchaInfo] = useState<Api.CaptchaVo>({
+    captchaEnabled: false,
+    uuid: '',
+    img: '',
+    expiresAt: 0
+  })
 
-  const tenantSelectDisabled = initializing || isLoggingIn || tenantOptions.length === 0
-
-  const refreshCaptcha = async () => {
-    setCaptchaLoading(true)
-    try {
-      const captcha = await authApi.getCaptcha()
-      const nextCaptchaEnabled = Boolean(captcha.captchaEnabled)
-
-      setCaptchaEnabled(nextCaptchaEnabled)
-      setCaptchaUuid(captcha.uuid)
-      setCaptchaImage(asCaptchaImage(captcha.img))
-
-      if (!nextCaptchaEnabled) {
-        form.setFieldValue('captchaCode', '')
-      }
-    } finally {
-      setCaptchaLoading(false)
-    }
-  }
+  const [isCaptchaExpired, setIsCaptchaExpired] = useState(false)
 
   useEffect(() => {
-    let active = true
-
-    const init = async () => {
-      setInitializing(true)
-
-      const [tenantResult, captchaResult] = await Promise.allSettled([
-        authApi.getLoginTenants(),
-        authApi.getCaptcha()
-      ])
-
-      if (!active) {
-        return
-      }
-
-      if (tenantResult.status === 'fulfilled') {
-        const payload = tenantResult.value
-        const tenantList = payload.voList ?? []
-        const nextTenantEnabled = Boolean(payload.tenantEnabled)
-
-        setTenantEnabled(nextTenantEnabled)
-        setTenants(tenantList)
-
-        if (nextTenantEnabled && tenantList.length > 0) {
-          form.setFieldValue('tenantId', tenantList[0]?.tenantId ?? '')
-        } else {
-          form.setFieldValue('tenantId', '')
-        }
-      } else {
-        toast.error(getErrorMessage(tenantResult.reason))
-      }
-
-      if (captchaResult.status === 'fulfilled') {
-        const captcha = captchaResult.value
-        const nextCaptchaEnabled = Boolean(captcha.captchaEnabled)
-
-        setCaptchaEnabled(nextCaptchaEnabled)
-        setCaptchaUuid(captcha.uuid)
-        setCaptchaImage(asCaptchaImage(captcha.img))
-
-        if (!nextCaptchaEnabled) {
-          form.setFieldValue('captchaCode', '')
-        }
-      } else {
-        toast.error(getErrorMessage(captchaResult.reason))
-      }
-
-      setInitializing(false)
+    const remaining = captchaInfo.expiresAt - Date.now()
+    if (remaining <= 0) {
+      setIsCaptchaExpired(true)
+      return
     }
+    setIsCaptchaExpired(false)
 
-    void init()
+    const timer = setTimeout(() => setIsCaptchaExpired(true), remaining)
+    return () => clearTimeout(timer)
+  }, [captchaInfo.expiresAt])
 
-    return () => {
-      active = false
+  const loadCaptcha = useCallback(async () => {
+    try {
+      const captcha = await authApi.getCaptcha()
+      if (captcha.captchaEnabled) {
+        captcha.img = `data:image/png;base64,${captcha.img}`
+      }
+      setCaptchaInfo(captcha)
+    } catch (error) {
+      console.error(error)
     }
   }, [])
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    event.stopPropagation()
-    void form.handleSubmit()
-  }
+  const [tenantInfo, setTenantInfo] = useState<Api.TenantVo>({
+    tenantEnabled: false,
+    voList: []
+  })
+
+  const loadTenant = useCallback(async () => {
+    const tenants = await authApi.getLoginTenants()
+    setTenantInfo(tenants)
+    if (tenants.tenantEnabled && tenants.voList.length > 0) {
+      form.setFieldValue('tenantId', tenants.voList[0].tenantId)
+    }
+  }, [form])
+
+  const tenantOptions = useMemo(
+    () => tenantInfo.voList.map(item => ({ label: item.companyName, value: item.tenantId })),
+    [tenantInfo]
+  )
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await Promise.all([loadCaptcha(), loadTenant()])
+    }
+    fetchData()
+  }, [loadCaptcha, loadTenant])
 
   return (
-    <form id="login-form" className="p-6 md:p-8" onSubmit={handleSubmit}>
+    <form
+      id="login-form"
+      className="p-6 md:p-8"
+      onSubmit={event => {
+        event.preventDefault()
+        form.handleSubmit()
+      }}
+    >
       <FieldGroup>
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-bold">Welcome Back</h1>
@@ -204,7 +158,7 @@ export function AccountLogin() {
           </p>
         </div>
 
-        {tenantEnabled && (
+        {tenantInfo.tenantEnabled && (
           <form.Field
             name="tenantId"
             validators={{
@@ -212,40 +166,42 @@ export function AccountLogin() {
               onSubmit: loginSchema.shape.tenantId
             }}
           >
-            {field => (
-              <Field data-invalid={field.state.meta.errors.length > 0}>
-                <Select
-                  disabled={tenantSelectDisabled}
-                  value={field.state.value || undefined}
-                  onValueChange={value => {
-                    field.handleChange(value)
-                    field.handleBlur()
-                  }}
-                >
-                  <SelectTrigger id="tenantId">
-                    <SelectValue
-                      placeholder={
-                        tenantOptions.length > 0 ? 'Select tenant' : 'No tenant available'
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent position="popper">
-                    {tenantOptions.length > 0 ? (
-                      tenantOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+            {field => {
+              const fieldError = getFieldError(field.state.meta.errors)
+              return (
+                <Field data-invalid={Boolean(fieldError)}>
+                  <Select
+                    value={field.state.value}
+                    onValueChange={value => {
+                      field.handleChange(value)
+                      field.handleBlur()
+                    }}
+                  >
+                    <SelectTrigger id="tenantId">
+                      <SelectValue
+                        placeholder={
+                          tenantOptions.length > 0 ? 'Select tenant' : 'No tenant available'
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      {tenantOptions.length > 0 ? (
+                        tenantOptions.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="__tenant_empty" disabled>
+                          No tenant available
                         </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="__tenant_empty" disabled>
-                        No tenant available
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                <FieldError>{getFieldError(field.state.meta.errors)}</FieldError>
-              </Field>
-            )}
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FieldError>{fieldError}</FieldError>
+                </Field>
+              )
+            }}
           </form.Field>
         )}
 
@@ -256,21 +212,23 @@ export function AccountLogin() {
             onSubmit: loginSchema.shape.username
           }}
         >
-          {field => (
-            <Field data-invalid={field.state.meta.errors.length > 0}>
-              <Input
-                id="username"
-                autoComplete="username"
-                disabled={isLoading}
-                onBlur={field.handleBlur}
-                onChange={event => field.handleChange(event.target.value)}
-                placeholder="Enter your username"
-                value={field.state.value}
-                className="text-sm"
-              />
-              <FieldError>{getFieldError(field.state.meta.errors)}</FieldError>
-            </Field>
-          )}
+          {field => {
+            const fieldError = getFieldError(field.state.meta.errors)
+            return (
+              <Field data-invalid={Boolean(fieldError)}>
+                <Input
+                  id="username"
+                  autoComplete="username"
+                  onBlur={field.handleBlur}
+                  onChange={event => field.handleChange(event.target.value)}
+                  placeholder="Enter your username"
+                  value={field.state.value}
+                  className="text-sm"
+                />
+                <FieldError>{fieldError}</FieldError>
+              </Field>
+            )
+          }}
         </form.Field>
         <form.Field
           name="password"
@@ -279,45 +237,46 @@ export function AccountLogin() {
             onSubmit: loginSchema.shape.password
           }}
         >
-          {field => (
-            <Field data-invalid={field.state.meta.errors.length > 0}>
-              <div className="relative">
-                <Input
-                  id="password"
-                  autoComplete="current-password"
-                  disabled={isLoading}
-                  onBlur={field.handleBlur}
-                  onChange={event => field.handleChange(event.target.value)}
-                  placeholder="Enter your password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={field.state.value}
-                  className="pr-10 text-sm [&::-ms-clear]:hidden [&::-ms-reveal]:hidden"
-                />
-                <button
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:cursor-pointer hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={isLoading}
-                  onClick={() => setShowPassword(prev => !prev)}
-                  type="button"
-                >
-                  {showPassword ? (
-                    <EyeOffIcon className="size-4" />
-                  ) : (
-                    <EyeIcon className="size-4" />
-                  )}
-                </button>
-              </div>
-              <FieldError>{getFieldError(field.state.meta.errors)}</FieldError>
-              <FieldDescription className="text-right">
-                <Link to="/" className="underline hover:cursor-pointer hover:text-foreground">
-                  Forgot your password?
-                </Link>
-              </FieldDescription>
-            </Field>
-          )}
+          {field => {
+            const fieldError = getFieldError(field.state.meta.errors)
+            return (
+              <Field data-invalid={Boolean(fieldError)}>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    autoComplete="current-password"
+                    onBlur={field.handleBlur}
+                    onChange={event => field.handleChange(event.target.value)}
+                    placeholder="Enter your password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={field.state.value}
+                    className="pr-10 text-sm [&::-ms-clear]:hidden [&::-ms-reveal]:hidden"
+                  />
+                  <button
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:cursor-pointer hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => setShowPassword(prev => !prev)}
+                    type="button"
+                  >
+                    {showPassword ? (
+                      <EyeOffIcon className="size-4" />
+                    ) : (
+                      <EyeIcon className="size-4" />
+                    )}
+                  </button>
+                </div>
+                <FieldError>{fieldError}</FieldError>
+                <FieldDescription className="text-right">
+                  <Link to="/" className="underline hover:cursor-pointer hover:text-foreground">
+                    Forgot your password?
+                  </Link>
+                </FieldDescription>
+              </Field>
+            )
+          }}
         </form.Field>
 
-        {captchaEnabled && (
+        {captchaInfo.captchaEnabled && (
           <form.Field
             name="captchaCode"
             validators={{
@@ -325,55 +284,53 @@ export function AccountLogin() {
               onSubmit: loginSchema.shape.captchaCode
             }}
           >
-            {field => (
-              <Field data-invalid={field.state.meta.errors.length > 0}>
-                <div className="flex gap-2">
-                  <Input
-                    id="captchaCode"
-                    className="flex-1 text-sm"
-                    onBlur={field.handleBlur}
-                    onChange={event => field.handleChange(event.target.value)}
-                    placeholder="Enter the captcha"
-                    value={field.state.value}
-                  />
-                  <button
-                    className="relative h-8 overflow-hidden rounded-lg border hover:cursor-pointer"
-                    onClick={refreshCaptcha}
-                    type="button"
-                  >
-                    {captchaImage ? (
-                      <img
-                        alt="captcha"
-                        className="h-full w-full object-cover"
-                        src={captchaImage}
-                      />
-                    ) : (
-                      <span className="grid h-full w-full place-items-center text-xs text-muted-foreground">
-                        Reload
-                      </span>
-                    )}
-                    {captchaLoading && (
-                      <span className="absolute inset-0 grid place-items-center bg-black/45 text-xs text-white">
-                        Loading
-                      </span>
-                    )}
-                  </button>
-                </div>
-                <FieldError>{getFieldError(field.state.meta.errors)}</FieldError>
-              </Field>
-            )}
+            {field => {
+              const fieldError = getFieldError(field.state.meta.errors)
+              return (
+                <Field data-invalid={Boolean(fieldError)}>
+                  <div className="flex gap-2">
+                    <Input
+                      id="captchaCode"
+                      className="flex-1 text-sm"
+                      onBlur={field.handleBlur}
+                      onChange={event => field.handleChange(event.target.value)}
+                      placeholder="Enter the captcha"
+                      value={field.state.value}
+                    />
+                    <button
+                      aria-label={
+                        isCaptchaExpired ? 'Reload captcha' : 'Captcha image, click to reload'
+                      }
+                      className="relative h-9 w-24 shrink-0 overflow-hidden rounded-lg border hover:cursor-pointer md:w-28"
+                      onClick={loadCaptcha}
+                      type="button"
+                    >
+                      {captchaInfo.img && (
+                        <img
+                          alt="captcha"
+                          className="size-full object-contain"
+                          src={captchaInfo.img}
+                        />
+                      )}
+                      {isCaptchaExpired && (
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/60 font-bold text-white backdrop-blur-sm">
+                          Expired
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                  <FieldError>{fieldError}</FieldError>
+                </Field>
+              )
+            }}
           </form.Field>
         )}
 
         <form.Subscribe selector={state => state.isSubmitting}>
           {isSubmitting => (
             <Field>
-              <Button
-                aria-busy={isLoggingIn || isSubmitting}
-                disabled={initializing || isLoggingIn || isSubmitting}
-                type="submit"
-              >
-                {isLoggingIn || isSubmitting ? (
+              <Button disabled={isSubmitting} type="submit">
+                {isSubmitting ? (
                   <>
                     <Spinner className="size-4" />
                     Login In...

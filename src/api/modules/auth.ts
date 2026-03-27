@@ -10,7 +10,7 @@ export interface PasswordLoginParams {
 }
 
 export async function getCaptcha() {
-  const response = await apiClient.get<Api.CaptchaResponse>('/auth/code', {
+  const response = await apiClient.get<Api.CaptchaResp>('/auth/code', {
     withAuth: false,
     skipErrorHandler: true
   })
@@ -18,7 +18,7 @@ export async function getCaptcha() {
 }
 
 export async function getLoginTenants() {
-  const response = await apiClient.get<Api.TenantListResponse>('/auth/tenant/list', {
+  const response = await apiClient.get<Api.TenantResp>('/auth/tenant/list', {
     withAuth: false,
     skipErrorHandler: true
   })
