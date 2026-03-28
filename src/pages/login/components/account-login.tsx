@@ -150,7 +150,6 @@ export function AccountLogin() {
                       value={field.state.value}
                       onValueChange={value => {
                         field.handleChange(value)
-                        field.handleBlur()
                       }}
                     >
                       <SelectTrigger id="tenantId">
@@ -186,7 +185,6 @@ export function AccountLogin() {
               <FormField>
                 <FormFieldControl>
                   <Input
-                    onBlur={field.handleBlur}
                     onChange={event => field.handleChange(event.target.value)}
                     placeholder="Enter your username"
                     value={field.state.value}
@@ -244,7 +242,6 @@ export function AccountLogin() {
                       <Input
                         id="captchaCode"
                         className="flex-1 text-sm"
-                        onBlur={field.handleBlur}
                         onChange={event => field.handleChange(event.target.value)}
                         placeholder="Enter the captcha"
                         value={field.state.value}
