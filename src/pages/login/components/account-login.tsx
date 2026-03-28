@@ -1,4 +1,3 @@
-import { useForm } from '@tanstack/react-form'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { EyeIcon, EyeOffIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -7,7 +6,6 @@ import { z } from 'zod'
 
 import { authApi } from '@/api'
 import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldGroup } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import {
@@ -19,6 +17,15 @@ import {
 } from '@/components/ui/select'
 import { getErrorMessage } from '@/lib/http'
 import { useAuthStore } from '@/stores/auth'
+import { useAppForm } from '@/hooks/form-hook'
+import {
+  FormField,
+  FormFieldControl,
+  FormFieldError,
+  Form,
+  FormFieldGroup
+} from '@/components/ui/form'
+import { FieldDescription } from '@/components/ui/field'
 
 const loginSchema = z.object({
   username: z.string().trim().min(1, 'Username is required'),
@@ -29,41 +36,22 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
-function getFieldError(errors: unknown[]): string | undefined {
-  for (const error of errors) {
-    if (typeof error === 'string') {
-      return error
-    }
-    if (Array.isArray(error)) {
-      const nested = getFieldError(error)
-      if (nested) {
-        return nested
-      }
-    }
-    if (
-      error &&
-      typeof error === 'object' &&
-      'message' in error &&
-      typeof error.message === 'string'
-    ) {
-      return error.message
-    }
-  }
-}
-
 export function AccountLogin() {
   const navigate = useNavigate()
   const login = useAuthStore(state => state.login)
 
   const [showPassword, setShowPassword] = useState(false)
 
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
       username: 'admin',
       password: 'admin123',
       tenantId: '',
       captchaCode: ''
     } satisfies LoginFormValues,
+    validators: {
+      onChange: loginSchema
+    },
     onSubmit: async ({ value }) => {
       const payload = {
         username: value.username,
@@ -141,192 +129,154 @@ export function AccountLogin() {
     fetchData()
   }, [loadCaptcha, loadTenant])
 
+  // FIXME: FormField* 组件只能出现在 form.AppField 的 render props 内部。其他范围使用原始的 shadcn 组件。
+
   return (
-    <form
-      id="login-form"
-      className="p-6 md:p-8"
-      onSubmit={event => {
-        event.preventDefault()
-        form.handleSubmit()
-      }}
-    >
-      <FieldGroup>
-        <div className="flex flex-col gap-2">
+    <form.AppForm>
+      <Form className="p-6 md:p-8">
+        <div className="mb-4 flex flex-col gap-2">
           <h1 className="text-2xl font-bold">Welcome Back</h1>
           <p className="text-sm text-balance text-muted-foreground">
             Please login to your account to get started.
           </p>
         </div>
-
-        {tenantInfo.tenantEnabled && (
-          <form.Field
-            name="tenantId"
-            validators={{
-              onBlur: loginSchema.shape.tenantId,
-              onSubmit: loginSchema.shape.tenantId
-            }}
-          >
-            {field => {
-              const fieldError = getFieldError(field.state.meta.errors)
-              return (
-                <Field data-invalid={Boolean(fieldError)}>
-                  <Select
-                    value={field.state.value}
-                    onValueChange={value => {
-                      field.handleChange(value)
-                      field.handleBlur()
-                    }}
-                  >
-                    <SelectTrigger id="tenantId">
-                      <SelectValue
-                        placeholder={
-                          tenantOptions.length > 0 ? 'Select tenant' : 'No tenant available'
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                      {tenantOptions.length > 0 ? (
-                        tenantOptions.map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+        <FormFieldGroup>
+          {tenantInfo.tenantEnabled && (
+            <form.AppField name="tenantId">
+              {field => (
+                <FormField>
+                  <FormFieldControl>
+                    <Select
+                      value={field.state.value}
+                      onValueChange={value => {
+                        field.handleChange(value)
+                        field.handleBlur()
+                      }}
+                    >
+                      <SelectTrigger id="tenantId">
+                        <SelectValue
+                          placeholder={
+                            tenantOptions.length > 0 ? 'Select tenant' : 'No tenant available'
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        {tenantOptions.length > 0 ? (
+                          tenantOptions.map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="__tenant_empty" disabled>
+                            No tenant available
                           </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="__tenant_empty" disabled>
-                          No tenant available
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FieldError>{fieldError}</FieldError>
-                </Field>
-              )
-            }}
-          </form.Field>
-        )}
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </FormFieldControl>
+                  <FormFieldError />
+                </FormField>
+              )}
+            </form.AppField>
+          )}
 
-        <form.Field
-          name="username"
-          validators={{
-            onBlur: loginSchema.shape.username,
-            onSubmit: loginSchema.shape.username
-          }}
-        >
-          {field => {
-            const fieldError = getFieldError(field.state.meta.errors)
-            return (
-              <Field data-invalid={Boolean(fieldError)}>
-                <Input
-                  id="username"
-                  autoComplete="username"
-                  onBlur={field.handleBlur}
-                  onChange={event => field.handleChange(event.target.value)}
-                  placeholder="Enter your username"
-                  value={field.state.value}
-                  className="text-sm"
-                />
-                <FieldError>{fieldError}</FieldError>
-              </Field>
-            )
-          }}
-        </form.Field>
-        <form.Field
-          name="password"
-          validators={{
-            onBlur: loginSchema.shape.password,
-            onSubmit: loginSchema.shape.password
-          }}
-        >
-          {field => {
-            const fieldError = getFieldError(field.state.meta.errors)
-            return (
-              <Field data-invalid={Boolean(fieldError)}>
-                <div className="relative">
+          <form.AppField name="username">
+            {field => (
+              <FormField>
+                <FormFieldControl>
                   <Input
-                    id="password"
-                    autoComplete="current-password"
                     onBlur={field.handleBlur}
                     onChange={event => field.handleChange(event.target.value)}
-                    placeholder="Enter your password"
-                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your username"
                     value={field.state.value}
-                    className="pr-10 text-sm [&::-ms-clear]:hidden [&::-ms-reveal]:hidden"
+                    className="text-sm"
                   />
-                  <button
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:cursor-pointer hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                    onClick={() => setShowPassword(prev => !prev)}
-                    type="button"
-                  >
-                    {showPassword ? (
-                      <EyeOffIcon className="size-4" />
-                    ) : (
-                      <EyeIcon className="size-4" />
-                    )}
-                  </button>
-                </div>
-                <FieldError>{fieldError}</FieldError>
+                </FormFieldControl>
+                <FormFieldError />
+              </FormField>
+            )}
+          </form.AppField>
+
+          <form.AppField name="password">
+            {field => (
+              <FormField>
+                <FormFieldControl>
+                  <div className="relative">
+                    <Input
+                      autoComplete="current-password"
+                      onChange={event => field.handleChange(event.target.value)}
+                      placeholder="Enter your password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={field.state.value}
+                      className="pr-10 text-sm [&::-ms-clear]:hidden [&::-ms-reveal]:hidden"
+                    />
+                    <button
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:cursor-pointer hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                      onClick={() => setShowPassword(prev => !prev)}
+                      type="button"
+                    >
+                      {showPassword ? (
+                        <EyeOffIcon className="size-4" />
+                      ) : (
+                        <EyeIcon className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </FormFieldControl>
+                <FormFieldError />
                 <FieldDescription className="text-right">
                   <Link to="/" className="underline hover:cursor-pointer hover:text-foreground">
                     Forgot your password?
                   </Link>
                 </FieldDescription>
-              </Field>
-            )
-          }}
-        </form.Field>
+              </FormField>
+            )}
+          </form.AppField>
 
-        {captchaInfo.captchaEnabled && (
-          <form.Field
-            name="captchaCode"
-            validators={{
-              onBlur: loginSchema.shape.captchaCode,
-              onSubmit: loginSchema.shape.captchaCode
-            }}
-          >
-            {field => {
-              const fieldError = getFieldError(field.state.meta.errors)
-              return (
-                <Field data-invalid={Boolean(fieldError)}>
-                  <div className="flex gap-2">
-                    <Input
-                      id="captchaCode"
-                      className="flex-1 text-sm"
-                      onBlur={field.handleBlur}
-                      onChange={event => field.handleChange(event.target.value)}
-                      placeholder="Enter the captcha"
-                      value={field.state.value}
-                    />
-                    <button
-                      className="relative h-9 overflow-hidden rounded-lg border hover:cursor-pointer"
-                      onClick={loadCaptcha}
-                      type="button"
-                    >
-                      {captchaInfo.img && (
-                        <img
-                          alt="captcha"
-                          className="size-full object-contain"
-                          src={captchaInfo.img}
-                        />
-                      )}
-                      {isCaptchaExpired && (
-                        <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/60 font-bold text-white backdrop-blur-sm">
-                          Expired
-                        </span>
-                      )}
-                    </button>
-                  </div>
-                  <FieldError>{fieldError}</FieldError>
-                </Field>
-              )
-            }}
-          </form.Field>
-        )}
-
-        <form.Subscribe selector={state => state.isSubmitting}>
-          {isSubmitting => (
-            <Field>
-              <Button disabled={isSubmitting} type="submit">
+          {captchaInfo.captchaEnabled && (
+            <form.AppField name="captchaCode">
+              {field => (
+                <FormField>
+                  <FormFieldControl>
+                    <div className="flex gap-2">
+                      <Input
+                        id="captchaCode"
+                        className="flex-1 text-sm"
+                        onBlur={field.handleBlur}
+                        onChange={event => field.handleChange(event.target.value)}
+                        placeholder="Enter the captcha"
+                        value={field.state.value}
+                      />
+                      <button
+                        className="relative h-9 overflow-hidden rounded-lg border hover:cursor-pointer"
+                        onClick={loadCaptcha}
+                        type="button"
+                      >
+                        {captchaInfo.img && (
+                          <img
+                            alt="captcha"
+                            className="size-full object-contain"
+                            src={captchaInfo.img}
+                          />
+                        )}
+                        {isCaptchaExpired && (
+                          <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/60 font-bold text-white backdrop-blur-sm">
+                            Expired
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  </FormFieldControl>
+                  <FormFieldError />
+                </FormField>
+              )}
+            </form.AppField>
+          )}
+          <form.Subscribe selector={state => [state.canSubmit, state.isSubmitting]}>
+            {([canSubmit, isSubmitting]) => (
+              <Button disabled={!canSubmit} type="submit">
                 {isSubmitting ? (
                   <>
                     <Spinner className="size-4" />
@@ -336,16 +286,16 @@ export function AccountLogin() {
                   'Login'
                 )}
               </Button>
-            </Field>
-          )}
-        </form.Subscribe>
-        <FieldDescription className="text-center">
-          <span className="mr-2">Don't have an account?</span>
-          <Link to="/" className="underline">
-            Sign Up
-          </Link>
-        </FieldDescription>
-      </FieldGroup>
-    </form>
+            )}
+          </form.Subscribe>
+          <FieldDescription className="text-center">
+            <span className="mr-2">Don't have an account?</span>
+            <Link to="/" className="underline">
+              Sign Up
+            </Link>
+          </FieldDescription>
+        </FormFieldGroup>
+      </Form>
+    </form.AppForm>
   )
 }
